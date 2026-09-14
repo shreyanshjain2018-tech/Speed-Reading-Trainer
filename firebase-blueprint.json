@@ -1,0 +1,58 @@
+{
+  "entities": {
+    "ReadingSession": {
+      "title": "ReadingSession",
+      "description": "User reading fixation training session analytics and metrics",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner user ID"
+        },
+        "totalWords": {
+          "type": "number",
+          "description": "Total words read in session"
+        },
+        "totalLines": {
+          "type": "number",
+          "description": "Total lines read"
+        },
+        "durationSeconds": {
+          "type": "number",
+          "description": "Duration in seconds"
+        },
+        "wpm": {
+          "type": "number",
+          "description": "Words per minute speed"
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "Unix millisecond timestamp"
+        },
+        "textTitle": {
+          "type": "string",
+          "description": "Title or snippet of the text read"
+        },
+        "comprehensionScore": {
+          "type": "number",
+          "description": "Comprehension quiz score"
+        },
+        "comprehensionMax": {
+          "type": "number",
+          "description": "Maximum comprehension score"
+        }
+      },
+      "required": ["totalWords", "totalLines", "durationSeconds", "wpm", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/history/{sessionId}": {
+      "schema": "ReadingSession",
+      "description": "Reading session historical performance entries"
+    },
+    "/users/{userId}/history/{sessionId}": {
+      "schema": "ReadingSession",
+      "description": "Per-user reading session historical performance entries"
+    }
+  }
+}

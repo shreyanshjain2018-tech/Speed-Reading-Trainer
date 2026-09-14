@@ -1,0 +1,6 @@
+{
+  "name": "Speed Reading Fixation Trainer",
+  "description": "Arrange text into narrow columns for Norman Lewis-style vertical eye fixation training, calculate WPM reading speed, and test comprehension using AI-generated quizzes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
