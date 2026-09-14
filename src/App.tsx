@@ -4,20 +4,48 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { AppTab, FontFamily } from "./types";
-import type { ReaderConfig, ReadingSessionStats } from "./types";
+import {
+  AppTab,
+  MainAppMode,
+  BookReaderTab,
+  FontFamily,
+  type ReaderConfig,
+  type ReadingSessionStats,
+  type Book,
+  type BookReadingSession,
+} from "./types";
 import { READING_SAMPLES } from "./data";
 import SetupView from "./components/SetupView";
 import ReadingView from "./components/ReadingView";
 import ResultsView from "./components/ResultsView";
 import QuizView from "./components/QuizView";
 import HistoryView from "./components/HistoryView";
-import { Sparkles, Compass, BarChart2, Cloud, RefreshCw, AlertCircle, CheckCircle2, User as UserIcon, LogOut, LogIn } from "lucide-react";
+import BookReaderView from "./components/BookReaderView";
+import BookProgressView from "./components/BookProgressView";
+import {
+  loadBooksFromStorage,
+  saveBooksToStorage,
+  updateBookBookmarkInStorage,
+  loadBookSessionsFromStorage,
+  saveBookSessionsToStorage,
+  parseImportedBookSessions,
+} from "./bookStorage";
+import {
+  Sparkles,
+  Compass,
+  BarChart2,
+  RefreshCw,
+  AlertCircle,
+  User as UserIcon,
+  LogOut,
+  LogIn,
+  BookOpen,
+  TrendingUp,
+} from "lucide-react";
 import {
   auth,
   db,
   collection,
-  addDoc,
   setDoc,
   doc,
   getDocs,
@@ -54,11 +82,22 @@ const DEFAULT_CONFIG: ReaderConfig = {
 };
 
 export default function App() {
+  // Top Level Navigation State
+  const [mainMode, setMainMode] = useState<MainAppMode>(MainAppMode.FIXATION);
+  
+  // Fixation Trainer Subtabs & State
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.SETUP);
   const [config, setConfig] = useState<ReaderConfig>(DEFAULT_CONFIG);
   const [sessionStats, setSessionStats] = useState<ReadingSessionStats | null>(null);
-
   const [history, setHistory] = useState<ReadingSessionStats[]>([]);
+
+  // Long-Form Book Reader Subtabs & State
+  const [bookTab, setBookTab] = useState<BookReaderTab>(BookReaderTab.READER);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [activeBookId, setActiveBookId] = useState<string>("");
+  const [bookSessions, setBookSessions] = useState<BookReadingSession[]>([]);
+
+  // Auth & Cloud Sync State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
@@ -67,6 +106,10 @@ export default function App() {
   const historyRef = useRef<ReadingSessionStats[]>([]);
   historyRef.current = history;
 
+  const bookSessionsRef = useRef<BookReadingSession[]>([]);
+  bookSessionsRef.current = bookSessions;
+
+  // Local Storage synchronizers
   const saveHistoryLocally = useCallback((newHistory: ReadingSessionStats[]) => {
     setHistory(newHistory);
     try {
@@ -76,7 +119,24 @@ export default function App() {
     }
   }, []);
 
-  // Comprehensive cloud history fetcher across all possible Firestore collections
+  const saveBookSessionsLocally = useCallback((newSessions: BookReadingSession[]) => {
+    setBookSessions(newSessions);
+    saveBookSessionsToStorage(newSessions);
+  }, []);
+
+  // Initialize books & sessions on mount
+  useEffect(() => {
+    const loadedBooks = loadBooksFromStorage();
+    setBooks(loadedBooks);
+    if (loadedBooks.length > 0) {
+      setActiveBookId(loadedBooks[0].id);
+    }
+
+    const loadedSessions = loadBookSessionsFromStorage();
+    setBookSessions(loadedSessions);
+  }, []);
+
+  // Cloud history fetcher for Fixation sessions
   const fetchAllCloudHistory = useCallback(async (user: User): Promise<ReadingSessionStats[]> => {
     const foundDocs = new Map<number, ReadingSessionStats>();
 
@@ -94,15 +154,20 @@ export default function App() {
           wpm: Number(data.wpm) || 0,
           timestamp: ts,
           textTitle: data.textTitle || "Custom Material",
-          comprehensionScore: data.comprehensionScore !== undefined && data.comprehensionScore !== null ? Number(data.comprehensionScore) : null,
-          comprehensionMax: data.comprehensionMax !== undefined && data.comprehensionMax !== null ? Number(data.comprehensionMax) : null,
+          comprehensionScore:
+            data.comprehensionScore !== undefined && data.comprehensionScore !== null
+              ? Number(data.comprehensionScore)
+              : null,
+          comprehensionMax:
+            data.comprehensionMax !== undefined && data.comprehensionMax !== null
+              ? Number(data.comprehensionMax)
+              : null,
         };
 
         const existing = foundDocs.get(ts);
         if (!existing) {
           foundDocs.set(ts, sessionItem);
         } else {
-          // Keep the record with comprehension data if available
           foundDocs.set(ts, {
             ...existing,
             ...sessionItem,
@@ -132,17 +197,50 @@ export default function App() {
     return Array.from(foundDocs.values()).sort((a, b) => a.timestamp - b.timestamp);
   }, []);
 
-  // Two-way synchronization: merges cloud and local records, uploads any unsynced local records
+  // Cloud book sessions fetcher
+  const fetchAllCloudBookSessions = useCallback(async (user: User): Promise<BookReadingSession[]> => {
+    const found = new Map<string, BookReadingSession>();
+
+    try {
+      const snap = await getDocs(collection(db, "users", user.uid, "book_sessions"));
+      snap.forEach((docSnap) => {
+        const d = docSnap.data();
+        if (!d) return;
+        const ts = normalizeTimestamp(d.timestamp) || Date.now();
+        const id = docSnap.id || `session_${ts}`;
+        found.set(id, {
+          id,
+          bookId: d.bookId || "unknown",
+          bookTitle: d.bookTitle || "Reading Session",
+          startWordIndex: Number(d.startWordIndex) || 0,
+          endWordIndex: Number(d.endWordIndex) || 0,
+          wordsRead: Number(d.wordsRead) || 0,
+          durationSeconds: Number(d.durationSeconds) || 0,
+          wpm: Number(d.wpm) || 0,
+          timestamp: ts,
+          dateString: d.dateString || new Date(ts).toISOString().split("T")[0],
+          startWordSnippet: d.startWordSnippet || "",
+          endWordSnippet: d.endWordSnippet || "",
+          progressPercent: Number(d.progressPercent) || 0,
+        });
+      });
+    } catch (e) {
+      console.warn("Cloud book sessions notice:", e);
+    }
+
+    return Array.from(found.values()).sort((a, b) => a.timestamp - b.timestamp);
+  }, []);
+
+  // Two-way synchronization
   const syncLocalAndCloud = useCallback(async (user: User, currentList: ReadingSessionStats[]) => {
     setIsSyncing(true);
     setSyncError(null);
 
     try {
-      // 1. Fetch all cloud records
+      // 1. Sync Fixation Sessions
       const cloudSessions = await fetchAllCloudHistory(user);
       const cloudTimestamps = new Set(cloudSessions.map((s) => s.timestamp));
 
-      // 2. Read existing local storage in case currentList missed anything
       let localSessions: ReadingSessionStats[] = [...currentList];
       try {
         const raw = localStorage.getItem("fixation_training_history");
@@ -159,15 +257,11 @@ export default function App() {
         }
       } catch (e) {}
 
-      // 3. Find local sessions that have not yet reached the cloud
       const unuploaded = localSessions.filter((s) => !cloudTimestamps.has(s.timestamp));
-
       if (unuploaded.length > 0) {
-        console.log(`Syncing ${unuploaded.length} local sessions up to Firebase...`);
         for (const item of unuploaded) {
           const docKey = `session_${item.timestamp}`;
           const cleanPayload = sanitizeSessionForFirestore(item, user);
-
           try {
             await setDoc(doc(db, "history", docKey), cleanPayload, { merge: true });
           } catch (err) {
@@ -181,7 +275,6 @@ export default function App() {
         }
       }
 
-      // 4. Merge all unique sessions
       const mergedMap = new Map<number, ReadingSessionStats>();
       [...localSessions, ...cloudSessions].forEach((s) => {
         const existing = mergedMap.get(s.timestamp);
@@ -199,7 +292,20 @@ export default function App() {
 
       const finalMerged = Array.from(mergedMap.values()).sort((a, b) => a.timestamp - b.timestamp);
       saveHistoryLocally(finalMerged);
-      setSyncStatus(`Synced with Firebase (${finalMerged.length} total sessions)`);
+
+      // 2. Sync Book Sessions
+      const cloudBookSessions = await fetchAllCloudBookSessions(user);
+      const localBookSessions = loadBookSessionsFromStorage();
+      const mergedBookMap = new Map<string, BookReadingSession>();
+
+      [...localBookSessions, ...cloudBookSessions].forEach((b) => {
+        mergedBookMap.set(b.id, b);
+      });
+
+      const finalBookSessions = Array.from(mergedBookMap.values()).sort((a, b) => a.timestamp - b.timestamp);
+      saveBookSessionsLocally(finalBookSessions);
+
+      setSyncStatus(`Synced with Firebase (${finalMerged.length} fixation, ${finalBookSessions.length} book sessions)`);
       return finalMerged;
     } catch (err: any) {
       console.error("Sync failure:", err);
@@ -209,11 +315,10 @@ export default function App() {
     } finally {
       setIsSyncing(false);
     }
-  }, [fetchAllCloudHistory, saveHistoryLocally]);
+  }, [fetchAllCloudHistory, fetchAllCloudBookSessions, saveHistoryLocally, saveBookSessionsLocally]);
 
   // Initial load & real-time auth listener
   useEffect(() => {
-    // 1. Initial fast local load
     try {
       const stored = localStorage.getItem("fixation_training_history");
       if (stored) {
@@ -227,7 +332,6 @@ export default function App() {
       }
     } catch (e) {}
 
-    // 2. Auth State Listener
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
@@ -250,7 +354,6 @@ export default function App() {
   useEffect(() => {
     if (!currentUser) return;
 
-    // Listen to changes in the history collection
     const q = collection(db, "history");
     const unsubscribeSnapshot = onSnapshot(
       q,
@@ -268,13 +371,18 @@ export default function App() {
             wpm: Number(data.wpm) || 0,
             timestamp: ts,
             textTitle: data.textTitle || "Custom Material",
-            comprehensionScore: data.comprehensionScore !== undefined && data.comprehensionScore !== null ? Number(data.comprehensionScore) : null,
-            comprehensionMax: data.comprehensionMax !== undefined && data.comprehensionMax !== null ? Number(data.comprehensionMax) : null,
+            comprehensionScore:
+              data.comprehensionScore !== undefined && data.comprehensionScore !== null
+                ? Number(data.comprehensionScore)
+                : null,
+            comprehensionMax:
+              data.comprehensionMax !== undefined && data.comprehensionMax !== null
+                ? Number(data.comprehensionMax)
+                : null,
           });
         });
 
         if (cloudMap.size > 0) {
-          // Merge with local history
           setHistory((prev) => {
             const merged = new Map<number, ReadingSessionStats>();
             prev.forEach((s) => merged.set(s.timestamp, s));
@@ -309,7 +417,7 @@ export default function App() {
     };
   }, [currentUser]);
 
-  // Explicit manual sign-in handler
+  // Auth handlers
   const handleSignIn = async () => {
     setSyncError(null);
     setIsSyncing(true);
@@ -332,7 +440,6 @@ export default function App() {
     }
   };
 
-  // Explicit sign-out handler
   const handleSignOut = async () => {
     try {
       await signOut(auth);
@@ -342,7 +449,6 @@ export default function App() {
     }
   };
 
-  // Manual sync trigger
   const handleManualSync = async () => {
     if (!currentUser) {
       handleSignIn();
@@ -353,6 +459,7 @@ export default function App() {
     } catch (e) {}
   };
 
+  // Fixation Trainer handlers
   const handleStartReading = () => {
     setActiveTab(AppTab.READING);
   };
@@ -379,19 +486,14 @@ export default function App() {
     const updatedHistory = [...history, decoratedStats];
     saveHistoryLocally(updatedHistory);
 
-    // Save to Firebase immediately if authenticated
     if (auth.currentUser) {
       const docKey = `session_${decoratedStats.timestamp}`;
       const cleanPayload = sanitizeSessionForFirestore(decoratedStats, auth.currentUser);
       try {
         await setDoc(doc(db, "history", docKey), cleanPayload, { merge: true });
-      } catch (e) {
-        handleFirestoreError(e, OperationType.CREATE, `history/${docKey}`);
-      }
-      try {
         await setDoc(doc(db, "users", auth.currentUser.uid, "history", docKey), cleanPayload, { merge: true });
       } catch (e) {
-        handleFirestoreError(e, OperationType.CREATE, `users/${auth.currentUser.uid}/history/${docKey}`);
+        handleFirestoreError(e, OperationType.CREATE, `history/${docKey}`);
       }
     }
 
@@ -412,12 +514,8 @@ export default function App() {
         comprehensionMax: max,
         syncedAt: Date.now(),
       };
-      try {
-        await setDoc(doc(db, "history", docKey), patch, { merge: true });
-      } catch (e) {}
-      try {
-        await setDoc(doc(db, "users", auth.currentUser.uid, "history", docKey), patch, { merge: true });
-      } catch (e) {}
+      await setDoc(doc(db, "history", docKey), patch, { merge: true });
+      await setDoc(doc(db, "users", auth.currentUser.uid, "history", docKey), patch, { merge: true });
     } catch (e) {
       console.error("Failed to sync quiz score to cloud:", e);
     }
@@ -449,8 +547,6 @@ export default function App() {
       const docKey = `session_${timestamp}`;
       try {
         await deleteDoc(doc(db, "history", docKey));
-      } catch (e) {}
-      try {
         await deleteDoc(doc(db, "users", auth.currentUser.uid, "history", docKey));
       } catch (e) {}
     }
@@ -478,7 +574,6 @@ export default function App() {
     }
   };
 
-  // Restore the user's documented 16 visual training runs
   const handleRestorePreRecordedSessions = async () => {
     const mergedMap = new Map<number, ReadingSessionStats>();
     history.forEach((s) => mergedMap.set(s.timestamp, s));
@@ -495,7 +590,6 @@ export default function App() {
     }
   };
 
-  // Manual import from JSON
   const handleImportSessions = async (jsonString: string) => {
     try {
       const imported = parseImportedSessions(jsonString);
@@ -521,12 +615,10 @@ export default function App() {
     }
   };
 
-  // Export current sessions
   const handleExportSessions = () => {
     try {
       const json = exportSessionsToJson(history);
       navigator.clipboard?.writeText(json);
-      // Also download backup file
       const blob = new Blob([json], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -545,114 +637,309 @@ export default function App() {
     setActiveTab(AppTab.SETUP);
   };
 
+  // Book Reader Handlers
+  const handleAddBook = (newBook: Book) => {
+    const updated = [newBook, ...books];
+    setBooks(updated);
+    saveBooksToStorage(updated);
+    setActiveBookId(newBook.id);
+  };
+
+  const handleDeleteBook = async (bookId: string) => {
+    // 1. Remove book from state and storage
+    const updatedBooks = books.filter((b) => b.id !== bookId);
+    setBooks(updatedBooks);
+    saveBooksToStorage(updatedBooks);
+    if (activeBookId === bookId) {
+      setActiveBookId(updatedBooks.length > 0 ? updatedBooks[0].id : "");
+    }
+
+    // 2. Cascade purge: remove all reading session logs associated with this book
+    const updatedSessions = bookSessions.filter((s) => s.bookId !== bookId);
+    saveBookSessionsLocally(updatedSessions);
+
+    // 3. Purge sessions from Cloud Firestore for this user if authenticated
+    if (auth.currentUser) {
+      try {
+        const colRef = collection(db, "users", auth.currentUser.uid, "book_sessions");
+        const snap = await getDocs(colRef);
+        const batch = writeBatch(db);
+        let count = 0;
+        snap.forEach((d) => {
+          const data = d.data();
+          if (data.bookId === bookId) {
+            batch.delete(d.ref);
+            count++;
+          }
+        });
+        if (count > 0) {
+          await batch.commit();
+        }
+      } catch (e) {
+        console.warn("Notice: cascade cloud session deletion:", e);
+      }
+    }
+  };
+
+  const handlePurgeBookSessionsOnly = async (bookId: string) => {
+    // Purge only reading session history for a specific book while keeping the book
+    const updatedSessions = bookSessions.filter((s) => s.bookId !== bookId);
+    saveBookSessionsLocally(updatedSessions);
+
+    // Reset book's bookmark to 0
+    handleUpdateBookmark(bookId, 0);
+
+    if (auth.currentUser) {
+      try {
+        const colRef = collection(db, "users", auth.currentUser.uid, "book_sessions");
+        const snap = await getDocs(colRef);
+        const batch = writeBatch(db);
+        snap.forEach((d) => {
+          const data = d.data();
+          if (data.bookId === bookId) {
+            batch.delete(d.ref);
+          }
+        });
+        await batch.commit();
+      } catch (e) {
+        console.warn("Notice: book history purge:", e);
+      }
+    }
+  };
+
+  const handleUpdateBookmark = (bookId: string, wordIndex: number) => {
+    const updated = updateBookBookmarkInStorage(bookId, wordIndex);
+    setBooks(updated);
+  };
+
+  const handleFinishBookSession = async (session: BookReadingSession) => {
+    const updated = [...bookSessions, session];
+    saveBookSessionsLocally(updated);
+
+    // Save to Firestore if authenticated
+    if (auth.currentUser) {
+      try {
+        await setDoc(doc(db, "users", auth.currentUser.uid, "book_sessions", session.id), session, { merge: true });
+      } catch (e) {
+        console.warn("Error persisting book session to cloud:", e);
+      }
+    }
+  };
+
+  const handleDeleteBookSession = async (sessionId: string) => {
+    const updated = bookSessions.filter((s) => s.id !== sessionId);
+    saveBookSessionsLocally(updated);
+
+    if (auth.currentUser) {
+      try {
+        await deleteDoc(doc(db, "users", auth.currentUser.uid, "book_sessions", sessionId));
+      } catch (e) {}
+    }
+  };
+
+  const handleClearAllBookSessions = async () => {
+    saveBookSessionsLocally([]);
+    if (auth.currentUser) {
+      try {
+        const colRef = collection(db, "users", auth.currentUser.uid, "book_sessions");
+        const snap = await getDocs(colRef);
+        const batch = writeBatch(db);
+        snap.forEach((d) => batch.delete(d.ref));
+        await batch.commit();
+      } catch (e) {}
+    }
+  };
+
+  const handleImportBookSessions = (jsonStr: string) => {
+    const imported = parseImportedBookSessions(jsonStr);
+    const map = new Map<string, BookReadingSession>();
+    bookSessions.forEach((s) => map.set(s.id, s));
+    imported.forEach((s) => map.set(s.id, s));
+    const merged = Array.from(map.values()).sort((a, b) => a.timestamp - b.timestamp);
+    saveBookSessionsLocally(merged);
+    setSyncStatus(`Imported ${imported.length} book reading sessions.`);
+  };
+
   return (
     <div className="min-h-screen bg-[#111317] flex flex-col font-sans text-slate-200" id="visual-trainer-application">
       
-      {/* Universal Top Decorative Header */}
-      <header className="bg-[#16181d] border-b border-[#232731] py-3 px-4 sm:px-6 shadow-md select-none">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#1f232c] text-white flex items-center justify-center font-bold text-lg shadow-sm border border-[#2e3442] shrink-0">
-              <Compass className="w-5 h-5 text-indigo-400 rotate-12" />
-            </div>
-            <div>
-              <span className="font-extrabold text-sm text-white tracking-tight block">
-                Fixation Method
-              </span>
-              <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest block -mt-0.5">
-                SPEED READING TRAINER
-              </span>
-            </div>
-          </div>
-
-          {/* Quick Tab Switcher */}
-          <div className="flex gap-1 bg-[#101216] border border-[#242935] p-0.5 rounded-xl">
-            <button
-              disabled={activeTab === AppTab.READING}
-              onClick={handleRestart}
-              id="header-nav-trainer"
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                activeTab !== AppTab.HISTORY
-                  ? "bg-[#252a36] text-white shadow-xs border border-[#373e4f]"
-                  : "text-slate-400 hover:text-white"
-              } ${activeTab === AppTab.READING ? "opacity-60 cursor-not-allowed" : ""}`}
-            >
-              Trainer Room
-            </button>
-            <button
-              disabled={activeTab === AppTab.READING}
-              onClick={() => setActiveTab(AppTab.HISTORY)}
-              id="header-nav-progress"
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                activeTab === AppTab.HISTORY
-                  ? "bg-[#252a36] text-white shadow-xs border border-[#373e4f]"
-                  : "text-slate-400 hover:text-white"
-              } ${activeTab === AppTab.READING ? "opacity-60 cursor-not-allowed" : ""}`}
-            >
-              <BarChart2 className="w-3.5 h-3.5" />
-              <span>My Progress</span>
-              {history.length > 0 && (
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-extrabold ${
-                  activeTab === AppTab.HISTORY ? "bg-indigo-500 text-white" : "bg-[#2e3442] text-slate-300"
-                }`}>
-                  {history.length}
+      {/* Universal Top Header & Two-Tier Tab Navigation */}
+      <header className="bg-[#16181d] border-b border-[#232731] py-3 px-4 sm:px-6 shadow-md select-none sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
+          
+          {/* Logo & Main Dual Tabs */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#1f232c] text-white flex items-center justify-center font-bold text-lg shadow-sm border border-[#2e3442] shrink-0">
+                <Compass className="w-5 h-5 text-indigo-400 rotate-12" />
+              </div>
+              <div>
+                <span className="font-extrabold text-sm text-white tracking-tight block">
+                  Speed Reading
                 </span>
-              )}
-            </button>
+                <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest block -mt-0.5">
+                  SYSTEM SUITE
+                </span>
+              </div>
+            </div>
+
+            {/* 1. PRIMARY TOP-LEVEL APP MODE TABS */}
+            <div className="flex gap-1 bg-[#101216] border border-[#242935] p-1 rounded-xl">
+              <button
+                disabled={activeTab === AppTab.READING}
+                onClick={() => setMainMode(MainAppMode.FIXATION)}
+                id="main-tab-fixation"
+                className={`px-3.5 py-1.5 text-xs font-extrabold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  mainMode === MainAppMode.FIXATION
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-slate-400 hover:text-white"
+                } ${activeTab === AppTab.READING ? "opacity-60 cursor-not-allowed" : ""}`}
+              >
+                <Compass className="w-3.5 h-3.5" />
+                <span>Fixation Trainer</span>
+              </button>
+
+              <button
+                disabled={activeTab === AppTab.READING}
+                onClick={() => setMainMode(MainAppMode.BOOK_READER)}
+                id="main-tab-bookreader"
+                className={`px-3.5 py-1.5 text-xs font-extrabold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  mainMode === MainAppMode.BOOK_READER
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-slate-400 hover:text-white"
+                } ${activeTab === AppTab.READING ? "opacity-60 cursor-not-allowed" : ""}`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>SAT / Book Reader</span>
+              </button>
+            </div>
           </div>
 
-          {/* User Account & Cloud Sync Controls */}
-          <div className="flex items-center gap-2 sm:gap-3 text-xs font-semibold">
-            {/* AI badge */}
-            <span className="hidden lg:flex text-slate-300 bg-[#1b1e26] border border-[#292e3b] px-2.5 py-1 rounded-full items-center gap-1 font-sans text-xs">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400 fill-current" />
-              Gemini AI Armed
-            </span>
-
-            {/* Sync status indicator */}
-            {currentUser && (
-              <button
-                onClick={handleManualSync}
-                disabled={isSyncing}
-                title="Click to force sync with Firebase"
-                className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono transition-colors cursor-pointer ${
-                  isSyncing
-                    ? "bg-indigo-950/60 border-indigo-700/60 text-indigo-300"
-                    : "bg-emerald-950/60 border-emerald-500/40 text-emerald-400 hover:bg-emerald-900/60"
-                }`}
-              >
-                <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin text-indigo-400" : "text-emerald-400"}`} />
-                <span>{isSyncing ? "Syncing..." : "Synced"}</span>
-              </button>
-            )}
-
-            {/* Auth Actions */}
-            {currentUser ? (
-              <div className="flex items-center gap-2">
-                <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#1b1e26] border border-[#292e3b] text-slate-300 text-xs font-medium max-w-[150px] truncate" title={currentUser.email || "Signed In"}>
-                  <UserIcon className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                  <span className="truncate">{currentUser.email?.split("@")[0] || "User"}</span>
-                </div>
+          {/* 2. SUBTABS (Conditional to Active Mode) */}
+          <div className="flex items-center justify-between sm:justify-end gap-3">
+            {mainMode === MainAppMode.FIXATION ? (
+              /* Fixation Subtabs */
+              <div className="flex gap-1 bg-[#101216] border border-[#242935] p-0.5 rounded-xl">
                 <button
-                  onClick={handleSignOut}
-                  id="btn-header-signout"
-                  className="px-3 py-1.5 rounded-lg bg-[#1b1e26] hover:bg-[#252a36] border border-[#292e3b] text-slate-300 font-bold text-xs tracking-tight transition-colors cursor-pointer flex items-center gap-1"
+                  disabled={activeTab === AppTab.READING}
+                  onClick={handleRestart}
+                  id="subtab-trainer-room"
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    activeTab !== AppTab.HISTORY
+                      ? "bg-[#252a36] text-white shadow-xs border border-[#373e4f]"
+                      : "text-slate-400 hover:text-white"
+                  } ${activeTab === AppTab.READING ? "opacity-60 cursor-not-allowed" : ""}`}
                 >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Sign Out</span>
+                  Trainer Room
+                </button>
+                <button
+                  disabled={activeTab === AppTab.READING}
+                  onClick={() => setActiveTab(AppTab.HISTORY)}
+                  id="subtab-trainer-progress"
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                    activeTab === AppTab.HISTORY
+                      ? "bg-[#252a36] text-white shadow-xs border border-[#373e4f]"
+                      : "text-slate-400 hover:text-white"
+                  } ${activeTab === AppTab.READING ? "opacity-60 cursor-not-allowed" : ""}`}
+                >
+                  <BarChart2 className="w-3.5 h-3.5" />
+                  <span>My Progress</span>
+                  {history.length > 0 && (
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-extrabold ${
+                      activeTab === AppTab.HISTORY ? "bg-indigo-500 text-white" : "bg-[#2e3442] text-slate-300"
+                    }`}>
+                      {history.length}
+                    </span>
+                  )}
                 </button>
               </div>
             ) : (
-              <button
-                onClick={handleSignIn}
-                disabled={isSyncing}
-                id="btn-header-signin"
-                className="px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 font-bold text-xs tracking-tight transition-colors cursor-pointer border border-indigo-500/40 flex items-center gap-1.5 shadow-2xs"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>{isSyncing ? "Connecting..." : "Sign In & Sync"}</span>
-              </button>
+              /* SAT / Book Reader Subtabs */
+              <div className="flex gap-1 bg-[#101216] border border-[#242935] p-0.5 rounded-xl">
+                <button
+                  onClick={() => setBookTab(BookReaderTab.READER)}
+                  id="subtab-book-reader"
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                    bookTab === BookReaderTab.READER
+                      ? "bg-[#252a36] text-white shadow-xs border border-[#373e4f]"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>Book Reader</span>
+                </button>
+                <button
+                  onClick={() => setBookTab(BookReaderTab.PROGRESS)}
+                  id="subtab-book-progress"
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                    bookTab === BookReaderTab.PROGRESS
+                      ? "bg-[#252a36] text-white shadow-xs border border-[#373e4f]"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  <span>Reading Progress</span>
+                  {bookSessions.length > 0 && (
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-extrabold ${
+                      bookTab === BookReaderTab.PROGRESS ? "bg-indigo-500 text-white" : "bg-[#2e3442] text-slate-300"
+                    }`}>
+                      {bookSessions.length}
+                    </span>
+                  )}
+                </button>
+              </div>
             )}
+
+            {/* User Account & Cloud Sync Controls */}
+            <div className="flex items-center gap-2 text-xs font-semibold">
+              <span className="hidden xl:flex text-slate-300 bg-[#1b1e26] border border-[#292e3b] px-2.5 py-1 rounded-full items-center gap-1 font-sans text-xs">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-400 fill-current" />
+                Gemini AI Armed
+              </span>
+
+              {currentUser && (
+                <button
+                  onClick={handleManualSync}
+                  disabled={isSyncing}
+                  title="Click to force sync with Firebase"
+                  className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono transition-colors cursor-pointer ${
+                    isSyncing
+                      ? "bg-indigo-950/60 border-indigo-700/60 text-indigo-300"
+                      : "bg-emerald-950/60 border-emerald-500/40 text-emerald-400 hover:bg-emerald-900/60"
+                  }`}
+                >
+                  <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin text-indigo-400" : "text-emerald-400"}`} />
+                  <span>{isSyncing ? "Syncing..." : "Synced"}</span>
+                </button>
+              )}
+
+              {currentUser ? (
+                <div className="flex items-center gap-2">
+                  <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#1b1e26] border border-[#292e3b] text-slate-300 text-xs font-medium max-w-[140px] truncate" title={currentUser.email || "Signed In"}>
+                    <UserIcon className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                    <span className="truncate">{currentUser.email?.split("@")[0] || "User"}</span>
+                  </div>
+                  <button
+                    onClick={handleSignOut}
+                    id="btn-header-signout"
+                    className="px-2.5 py-1.5 rounded-lg bg-[#1b1e26] hover:bg-[#252a36] border border-[#292e3b] text-slate-300 font-bold text-xs tracking-tight transition-colors cursor-pointer flex items-center gap-1"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Sign Out</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleSignIn}
+                  disabled={isSyncing}
+                  id="btn-header-signin"
+                  className="px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 font-bold text-xs tracking-tight transition-colors cursor-pointer border border-indigo-500/40 flex items-center gap-1.5 shadow-2xs"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>{isSyncing ? "Connecting..." : "Sign In & Sync"}</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -685,62 +972,102 @@ export default function App() {
 
       {/* Primary Dynamic Workspace View */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 flex flex-col justify-start">
-        {activeTab === AppTab.SETUP && (
-          <SetupView
-            config={config}
-            onChangeConfig={setConfig}
-            onStartReading={handleStartReading}
-          />
+        {/* MODE 1: FIXATION TRAINER */}
+        {mainMode === MainAppMode.FIXATION && (
+          <>
+            {activeTab === AppTab.SETUP && (
+              <SetupView
+                config={config}
+                onChangeConfig={setConfig}
+                onStartReading={handleStartReading}
+              />
+            )}
+
+            {activeTab === AppTab.READING && (
+              <ReadingView
+                config={config}
+                onChangeConfig={setConfig}
+                onFinishReading={handleFinishReading}
+                onBack={handleRestart}
+              />
+            )}
+
+            {activeTab === AppTab.RESULTS && sessionStats && (
+              <ResultsView
+                stats={sessionStats}
+                onStartQuiz={handleStartQuiz}
+                onRestart={handleRestart}
+              />
+            )}
+
+            {activeTab === AppTab.COMPREHENSION && sessionStats && (
+              <QuizView
+                text={config.text}
+                stats={sessionStats}
+                onRestart={handleRestart}
+                onQuizSubmit={handleQuizSubmit}
+              />
+            )}
+
+            {activeTab === AppTab.HISTORY && (
+              <HistoryView
+                history={history}
+                onClearHistory={handleClearHistory}
+                onDeleteSession={handleDeleteSession}
+                onBack={handleRestart}
+                currentUser={currentUser}
+                isSyncing={isSyncing}
+                syncStatus={syncStatus}
+                syncError={syncError}
+                onManualSync={handleManualSync}
+                onSignIn={handleSignIn}
+                onRestorePreRecorded={handleRestorePreRecordedSessions}
+                onImportSessions={handleImportSessions}
+                onExportSessions={handleExportSessions}
+              />
+            )}
+          </>
         )}
 
-        {activeTab === AppTab.READING && (
-          <ReadingView
-            config={config}
-            onChangeConfig={setConfig}
-            onFinishReading={handleFinishReading}
-            onBack={handleRestart}
-          />
-        )}
+        {/* MODE 2: SAT / BOOK READER */}
+        {mainMode === MainAppMode.BOOK_READER && (
+          <>
+            {bookTab === BookReaderTab.READER && (
+              <BookReaderView
+                books={books}
+                activeBookId={activeBookId}
+                onSelectBook={(id) => setActiveBookId(id)}
+                onAddBook={handleAddBook}
+                onDeleteBook={handleDeleteBook}
+                onUpdateBookmark={handleUpdateBookmark}
+                onFinishSession={handleFinishBookSession}
+                onSwitchToProgress={() => setBookTab(BookReaderTab.PROGRESS)}
+              />
+            )}
 
-        {activeTab === AppTab.RESULTS && sessionStats && (
-          <ResultsView
-            stats={sessionStats}
-            onStartQuiz={handleStartQuiz}
-            onRestart={handleRestart}
-          />
-        )}
-
-        {activeTab === AppTab.COMPREHENSION && sessionStats && (
-          <QuizView
-            text={config.text}
-            stats={sessionStats}
-            onRestart={handleRestart}
-            onQuizSubmit={handleQuizSubmit}
-          />
-        )}
-
-        {activeTab === AppTab.HISTORY && (
-          <HistoryView
-            history={history}
-            onClearHistory={handleClearHistory}
-            onDeleteSession={handleDeleteSession}
-            onBack={handleRestart}
-            currentUser={currentUser}
-            isSyncing={isSyncing}
-            syncStatus={syncStatus}
-            syncError={syncError}
-            onManualSync={handleManualSync}
-            onSignIn={handleSignIn}
-            onRestorePreRecorded={handleRestorePreRecordedSessions}
-            onImportSessions={handleImportSessions}
-            onExportSessions={handleExportSessions}
-          />
+            {bookTab === BookReaderTab.PROGRESS && (
+              <BookProgressView
+                books={books}
+                sessions={bookSessions}
+                onSelectBookAndRead={(id) => {
+                  setActiveBookId(id);
+                  setBookTab(BookReaderTab.READER);
+                }}
+                onDeleteBookAndHistory={handleDeleteBook}
+                onPurgeBookHistory={handlePurgeBookSessionsOnly}
+                onDeleteSession={handleDeleteBookSession}
+                onClearAllSessions={handleClearAllBookSessions}
+                onImportSessions={handleImportBookSessions}
+                onBackToReader={() => setBookTab(BookReaderTab.READER)}
+              />
+            )}
+          </>
         )}
       </main>
 
       {/* Simple, Non-intrusive Professional Human Footer */}
       <footer className="py-4 text-center border-t border-[#232731] bg-[#16181d] select-none text-[10px] font-mono text-slate-500">
-        <p>Gaze Fixation Training System &bull; Inspired by Norman Lewis's "How to Read Better and Faster"</p>
+        <p>Speed Reading System Suite &bull; Fixation Columns &amp; Long-form SAT/ACT Reader</p>
       </footer>
     </div>
   );

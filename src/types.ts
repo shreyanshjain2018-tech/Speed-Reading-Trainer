@@ -6,6 +6,16 @@ export enum AppTab {
   HISTORY = "HISTORY"
 }
 
+export enum MainAppMode {
+  FIXATION = "FIXATION",
+  BOOK_READER = "BOOK_READER"
+}
+
+export enum BookReaderTab {
+  READER = "READER",
+  PROGRESS = "PROGRESS"
+}
+
 export enum FontFamily {
   SANS = "SANS",
   SERIF = "SERIF",
@@ -53,4 +63,44 @@ export interface ReadingSessionStats {
   textTitle?: string;
   comprehensionScore?: number | null; // e.g. 3/5 is 0.6
   comprehensionMax?: number | null; // e.g. 5
+}
+
+export interface Book {
+  id: string;
+  title: string;
+  author: string;
+  description?: string;
+  htmlContent: string;
+  plainText?: string;
+  totalWords: number;
+  currentWordIndex: number; // Current bookmark index (0-based)
+  createdAt: number;
+  lastReadAt: number;
+  isCustomUpload?: boolean;
+}
+
+export interface BookReadingSession {
+  id: string;
+  bookId: string;
+  bookTitle: string;
+  startWordIndex: number;
+  endWordIndex: number;
+  wordsRead: number;
+  durationSeconds: number;
+  wpm: number;
+  timestamp: number;
+  dateString: string; // "YYYY-MM-DD"
+  startWordSnippet?: string;
+  endWordSnippet?: string;
+  progressPercent?: number;
+}
+
+export interface BookReaderConfig {
+  columns: 1 | 2; // Single or Double SAT Column
+  fontSize: "sm" | "base" | "lg" | "xl" | "2xl";
+  fontFamily: FontFamily;
+  lineHeight: "tight" | "normal" | "relaxed" | "loose";
+  showLineNumbers: boolean;
+  highlightLineHover: boolean;
+  lineWordsTarget: number; // 7 - 12 words per line (standard SAT/ACT formatting)
 }

@@ -1,6 +1,6 @@
 {
   "name": "Speed Reading Fixation Trainer",
-  "description": "Arrange text into narrow columns for Norman Lewis-style vertical eye fixation training, calculate WPM reading speed, and test comprehension using AI-generated quizzes.",
+  "description": "Speed reading suite with Norman Lewis vertical fixation column trainer and long-form SAT/ACT HTML book reader with multi-day bookmarking and analytics.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
