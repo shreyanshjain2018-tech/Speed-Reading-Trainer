@@ -546,35 +546,35 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 flex flex-col font-sans text-slate-800" id="visual-trainer-application">
+    <div className="min-h-screen bg-[#111317] flex flex-col font-sans text-slate-200" id="visual-trainer-application">
       
       {/* Universal Top Decorative Header */}
-      <header className="bg-white border-b border-slate-100 py-3 px-4 sm:px-6 shadow-2xs select-none">
+      <header className="bg-[#16181d] border-b border-[#232731] py-3 px-4 sm:px-6 shadow-md select-none">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-[#1f232c] text-white flex items-center justify-center font-bold text-lg shadow-sm border border-[#2e3442] shrink-0">
               <Compass className="w-5 h-5 text-indigo-400 rotate-12" />
             </div>
             <div>
-              <span className="font-extrabold text-sm text-slate-900 tracking-tight block">
+              <span className="font-extrabold text-sm text-white tracking-tight block">
                 Fixation Method
               </span>
-              <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest block -mt-0.5">
+              <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest block -mt-0.5">
                 SPEED READING TRAINER
               </span>
             </div>
           </div>
 
           {/* Quick Tab Switcher */}
-          <div className="flex gap-1 bg-slate-50 border border-slate-200/60 p-0.5 rounded-xl">
+          <div className="flex gap-1 bg-[#101216] border border-[#242935] p-0.5 rounded-xl">
             <button
               disabled={activeTab === AppTab.READING}
               onClick={handleRestart}
               id="header-nav-trainer"
               className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 activeTab !== AppTab.HISTORY
-                  ? "bg-slate-900 text-white shadow-2xs"
-                  : "text-slate-500 hover:text-slate-900"
+                  ? "bg-[#252a36] text-white shadow-xs border border-[#373e4f]"
+                  : "text-slate-400 hover:text-white"
               } ${activeTab === AppTab.READING ? "opacity-60 cursor-not-allowed" : ""}`}
             >
               Trainer Room
@@ -585,15 +585,15 @@ export default function App() {
               id="header-nav-progress"
               className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTab === AppTab.HISTORY
-                  ? "bg-slate-900 text-white shadow-2xs"
-                  : "text-slate-500 hover:text-slate-900"
+                  ? "bg-[#252a36] text-white shadow-xs border border-[#373e4f]"
+                  : "text-slate-400 hover:text-white"
               } ${activeTab === AppTab.READING ? "opacity-60 cursor-not-allowed" : ""}`}
             >
               <BarChart2 className="w-3.5 h-3.5" />
               <span>My Progress</span>
               {history.length > 0 && (
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-extrabold ${
-                  activeTab === AppTab.HISTORY ? "bg-indigo-500 text-white" : "bg-slate-200 text-slate-700"
+                  activeTab === AppTab.HISTORY ? "bg-indigo-500 text-white" : "bg-[#2e3442] text-slate-300"
                 }`}>
                   {history.length}
                 </span>
@@ -604,8 +604,8 @@ export default function App() {
           {/* User Account & Cloud Sync Controls */}
           <div className="flex items-center gap-2 sm:gap-3 text-xs font-semibold">
             {/* AI badge */}
-            <span className="hidden lg:flex text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full items-center gap-1 font-sans text-xs">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-500 fill-current" />
+            <span className="hidden lg:flex text-slate-300 bg-[#1b1e26] border border-[#292e3b] px-2.5 py-1 rounded-full items-center gap-1 font-sans text-xs">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400 fill-current" />
               Gemini AI Armed
             </span>
 
@@ -617,11 +617,11 @@ export default function App() {
                 title="Click to force sync with Firebase"
                 className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono transition-colors cursor-pointer ${
                   isSyncing
-                    ? "bg-indigo-50 border-indigo-200 text-indigo-700"
-                    : "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+                    ? "bg-indigo-950/60 border-indigo-700/60 text-indigo-300"
+                    : "bg-emerald-950/60 border-emerald-500/40 text-emerald-400 hover:bg-emerald-900/60"
                 }`}
               >
-                <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin text-indigo-600" : "text-emerald-600"}`} />
+                <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin text-indigo-400" : "text-emerald-400"}`} />
                 <span>{isSyncing ? "Syncing..." : "Synced"}</span>
               </button>
             )}
@@ -629,14 +629,14 @@ export default function App() {
             {/* Auth Actions */}
             {currentUser ? (
               <div className="flex items-center gap-2">
-                <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-medium max-w-[150px] truncate" title={currentUser.email || "Signed In"}>
-                  <UserIcon className="w-3.5 h-3.5 shrink-0 text-slate-500" />
+                <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#1b1e26] border border-[#292e3b] text-slate-300 text-xs font-medium max-w-[150px] truncate" title={currentUser.email || "Signed In"}>
+                  <UserIcon className="w-3.5 h-3.5 shrink-0 text-slate-400" />
                   <span className="truncate">{currentUser.email?.split("@")[0] || "User"}</span>
                 </div>
                 <button
                   onClick={handleSignOut}
                   id="btn-header-signout"
-                  className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs tracking-tight transition-colors cursor-pointer flex items-center gap-1"
+                  className="px-3 py-1.5 rounded-lg bg-[#1b1e26] hover:bg-[#252a36] border border-[#292e3b] text-slate-300 font-bold text-xs tracking-tight transition-colors cursor-pointer flex items-center gap-1"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Sign Out</span>
@@ -647,7 +647,7 @@ export default function App() {
                 onClick={handleSignIn}
                 disabled={isSyncing}
                 id="btn-header-signin"
-                className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs tracking-tight transition-colors cursor-pointer border border-indigo-200 flex items-center gap-1.5 shadow-2xs"
+                className="px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 font-bold text-xs tracking-tight transition-colors cursor-pointer border border-indigo-500/40 flex items-center gap-1.5 shadow-2xs"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>{isSyncing ? "Connecting..." : "Sign In & Sync"}</span>
@@ -659,22 +659,22 @@ export default function App() {
 
       {/* Global Sync Error / Status Notice */}
       {syncError && (
-        <div className="bg-red-50 border-b border-red-200 px-4 py-2.5 text-xs text-red-700 flex items-center justify-between">
+        <div className="bg-red-950/80 border-b border-red-800 px-4 py-2.5 text-xs text-red-200 flex items-center justify-between">
           <div className="max-w-7xl mx-auto w-full flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
               <span>{syncError}</span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleManualSync}
-                className="px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-800 font-bold rounded-lg transition-colors cursor-pointer"
+                className="px-2.5 py-1 bg-red-900/60 hover:bg-red-800 text-red-100 font-bold rounded-lg transition-colors cursor-pointer"
               >
                 Retry
               </button>
               <button
                 onClick={() => setSyncError(null)}
-                className="text-red-500 hover:text-red-700 font-bold text-sm px-1 cursor-pointer"
+                className="text-red-400 hover:text-red-200 font-bold text-sm px-1 cursor-pointer"
               >
                 &times;
               </button>
@@ -739,7 +739,7 @@ export default function App() {
       </main>
 
       {/* Simple, Non-intrusive Professional Human Footer */}
-      <footer className="py-4 text-center border-t border-slate-100 bg-white select-none text-[10px] font-mono text-slate-400">
+      <footer className="py-4 text-center border-t border-[#232731] bg-[#16181d] select-none text-[10px] font-mono text-slate-500">
         <p>Gaze Fixation Training System &bull; Inspired by Norman Lewis's "How to Read Better and Faster"</p>
       </footer>
     </div>

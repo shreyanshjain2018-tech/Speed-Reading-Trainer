@@ -125,46 +125,46 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
     <div className="max-w-3xl mx-auto space-y-6" id="comprehension-quiz-root">
       
       {/* Quiz Progress header with small Stats recap */}
-      <div className="bg-white border border-slate-100 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-2xs select-none">
+      <div className="bg-[#16181d] border border-[#232731] p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-2xs select-none">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+          <div className="p-2 bg-[#1f232d] text-indigo-400 rounded-lg border border-[#2e3442]">
             <Award className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-slate-800 text-sm">Comprehension Assessment</h3>
+            <h3 className="font-bold text-white text-sm">Comprehension Assessment</h3>
             <p className="text-xs text-slate-400">Verifying retention for {stats.totalWords} words</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-6 font-mono text-xs font-semibold text-slate-500">
-          <span>Speed: <strong className="text-slate-800 font-bold">{stats.wpm} WPM</strong></span>
-          <span>Time: <strong className="text-slate-800 font-bold">{Math.round(stats.durationSeconds)}s</strong></span>
+        <div className="flex items-center gap-6 font-mono text-xs font-semibold text-slate-400">
+          <span>Speed: <strong className="text-slate-200 font-bold">{stats.wpm} WPM</strong></span>
+          <span>Time: <strong className="text-slate-200 font-bold">{Math.round(stats.durationSeconds)}s</strong></span>
         </div>
       </div>
 
       {loading && (
-        <div className="bg-white border border-slate-100 rounded-2xl p-12 text-center space-y-6 shadow-xs select-none">
+        <div className="bg-[#16181d] border border-[#232731] rounded-2xl p-12 text-center space-y-6 shadow-xs select-none">
           <div className="relative w-20 h-20 mx-auto">
             {/* Pulsing loading target rings */}
-            <div className="absolute inset-0 rounded-full border-4 border-indigo-100 animate-ping" />
-            <div className="relative w-20 h-20 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+            <div className="absolute inset-0 rounded-full border-4 border-indigo-500/20 animate-ping" />
+            <div className="relative w-20 h-20 rounded-full bg-[#1e222d] border border-[#2e3445] flex items-center justify-center text-indigo-400">
               <Sparkles className="w-8 h-8 animate-spin" />
             </div>
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-slate-800 font-bold text-lg">AI Comprehension Synthesis</h3>
+            <h3 className="text-white font-bold text-lg">AI Comprehension Synthesis</h3>
             <p className="text-slate-400 text-xs max-w-sm mx-auto leading-relaxed font-sans">
               Gemini is digesting the material you just read to construct a custom 5-question multiple choice challenge...
             </p>
           </div>
 
           {/* Practice reading suggestions */}
-          <div className="max-w-md mx-auto p-4 bg-slate-50 rounded-xl border border-slate-100 text-left space-y-2">
+          <div className="max-w-md mx-auto p-4 bg-[#111317] rounded-xl border border-[#232731] text-left space-y-2">
             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
               Speed Reading Coach Tip:
             </span>
-            <p className="text-xs text-slate-600 leading-normal font-sans">
+            <p className="text-xs text-slate-300 leading-normal font-sans">
               "To improve both retention and speed, focus on visual triggers. Do not pronounce words
               silently in your throat relative to vocal cords (sub-vocalization). Instead, leap downwards down the column using only your eye's instantaneous recognition."
             </p>
@@ -173,12 +173,12 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
       )}
 
       {errorMsg && (
-        <div className="bg-white border border-red-100 rounded-2xl p-8 text-center space-y-4 shadow-sm select-none">
-          <div className="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto">
+        <div className="bg-[#16181d] border border-red-900/40 rounded-2xl p-8 text-center space-y-4 shadow-sm select-none">
+          <div className="w-12 h-12 rounded-full bg-red-950/60 border border-red-800/50 text-red-400 flex items-center justify-center mx-auto">
             <AlertCircle className="w-6 h-6" />
           </div>
           <div className="space-y-1">
-            <h3 className="font-bold text-slate-800">Quiz Generation Failed</h3>
+            <h3 className="font-bold text-white">Quiz Generation Failed</h3>
             <p className="text-xs text-slate-400 max-w-sm mx-auto">
               {errorMsg}
             </p>
@@ -186,7 +186,7 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
           <button
             onClick={onRestart}
             id="error-restart-btn"
-            className="inline-flex py-1.5 px-4 bg-slate-950 text-white rounded-lg text-xs font-semibold hover:bg-slate-800 transition-colors cursor-pointer"
+            className="inline-flex py-2 px-5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
           >
             Go Back & Setup
           </button>
@@ -201,27 +201,27 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 
                 {/* Result Card 1: Score breakdown */}
-                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs text-center space-y-2">
+                <div className="bg-[#16181d] p-5 rounded-2xl border border-[#232731] shadow-2xs text-center space-y-2">
                   <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider font-sans">
                     Test Score
                   </span>
                   <div className="flex items-baseline justify-center gap-1.5">
-                    <span className="text-4xl font-extrabold text-indigo-600 font-mono">
+                    <span className="text-4xl font-extrabold text-indigo-400 font-mono">
                       {quizState.score}/{totalQuestions}
                     </span>
                     <span className="text-sm text-slate-400">correct</span>
                   </div>
                   <div className="pt-2 text-xs font-medium font-sans">
                     {scorePercent >= 0.8 ? (
-                      <span className="text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
+                      <span className="text-emerald-300 bg-emerald-950/60 border border-emerald-800/40 px-2.5 py-1 rounded-full">
                         Superb Retention!
                       </span>
                     ) : scorePercent >= 0.6 ? (
-                      <span className="text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
+                      <span className="text-blue-300 bg-blue-950/60 border border-blue-800/40 px-2.5 py-1 rounded-full">
                         Good comprehension
                       </span>
                     ) : (
-                      <span className="text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">
+                      <span className="text-amber-300 bg-amber-950/60 border border-amber-800/40 px-2.5 py-1 rounded-full">
                         Needs Practice
                       </span>
                     )}
@@ -229,12 +229,12 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
                 </div>
 
                 {/* Result Card 2: Speed metrics overview */}
-                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs text-center space-y-2">
+                <div className="bg-[#16181d] p-5 rounded-2xl border border-[#232731] shadow-2xs text-center space-y-2">
                   <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider font-sans">
                     Raw Speed
                   </span>
                   <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-4xl font-extrabold text-slate-800 font-mono">
+                    <span className="text-4xl font-extrabold text-slate-100 font-mono">
                       {stats.wpm}
                     </span>
                     <span className="text-xs text-slate-400 uppercase font-bold">WPM</span>
@@ -245,10 +245,10 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
                 </div>
 
                 {/* Result Card 3: EFFECTIVE READING RATE (ERR) */}
-                <div className="bg-indigo-950 text-white p-5 rounded-2xl border border-indigo-900 shadow-sm text-center relative overflow-hidden space-y-2">
+                <div className="bg-gradient-to-br from-indigo-950 to-indigo-900 text-white p-5 rounded-2xl border border-indigo-700/40 shadow-sm text-center relative overflow-hidden space-y-2">
                   
                   {/* Subtle geometric pattern */}
-                  <div className="absolute right-0 top-0 w-24 h-24 bg-indigo-800/10 rounded-full translate-x-6 -translate-y-6" />
+                  <div className="absolute right-0 top-0 w-24 h-24 bg-indigo-500/10 rounded-full translate-x-6 -translate-y-6" />
 
                   <span className="text-[10px] uppercase font-bold text-indigo-300 tracking-wider flex items-center justify-center gap-1">
                     <Trophy className="w-3.5 h-3.5 text-amber-400 fill-current" />
@@ -281,21 +281,21 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
                       id={`diagnostic-question-${qIdx}`}
                       className={`p-6 rounded-2xl border ${
                         isCorrect
-                          ? "bg-white border-green-100 shadow-2xs"
-                          : "bg-white border-red-100 shadow-2xs"
+                          ? "bg-[#16181d] border-emerald-800/40 shadow-2xs"
+                          : "bg-[#16181d] border-rose-900/40 shadow-2xs"
                       } space-y-4`}
                     >
                       <div className="flex items-start gap-3">
                         <span
                           className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono font-bold mt-0.5 shrink-0 ${
                             isCorrect
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
+                              ? "bg-emerald-950 text-emerald-300 border border-emerald-700/50"
+                              : "bg-rose-950 text-rose-300 border border-rose-700/50"
                           }`}
                         >
                           {qIdx + 1}
                         </span>
-                        <h4 className="font-bold text-slate-800 text-sm leading-normal">
+                        <h4 className="font-bold text-slate-200 text-sm leading-normal">
                           {q.question}
                         </h4>
                       </div>
@@ -313,10 +313,10 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
                               id={`diagnostic-${qIdx}-option-${oIdx}`}
                               className={`p-3 rounded-xl border text-xs flex justify-between items-center ${
                                 isCorrectOption
-                                  ? "bg-green-50 border-green-300 text-green-800 font-semibold"
+                                  ? "bg-emerald-950/50 border-emerald-700/60 text-emerald-200 font-semibold"
                                   : isUserSelection
-                                  ? "bg-red-50 border-red-300 text-red-800 font-medium"
-                                  : "bg-slate-50/50 border-slate-100 text-slate-500"
+                                  ? "bg-rose-950/50 border-rose-700/60 text-rose-200 font-medium"
+                                  : "bg-[#111317] border-[#242935] text-slate-400"
                               }`}
                             >
                               <span>
@@ -326,10 +326,10 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
                                 {opt}
                               </span>
                               {isCorrectOption && (
-                                <Check className="w-3.5 h-3.5 text-green-600 shrink-0 ml-1.5" />
+                                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-1.5" />
                               )}
                               {!isCorrectOption && isUserSelection && (
-                                <span className="text-[10px] text-red-500 font-bold ml-1.5">Your answer</span>
+                                <span className="text-[10px] text-rose-400 font-bold ml-1.5">Your answer</span>
                               )}
                             </div>
                           );
@@ -338,7 +338,7 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
 
                       {/* Explanation box */}
                       <div className="pl-9 pt-1.5">
-                        <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-600 space-y-1">
+                        <div className="p-3.5 bg-[#111317] rounded-xl border border-[#242935] text-xs text-slate-300 space-y-1">
                           <span className="text-[10px] uppercase font-bold text-slate-400 font-sans tracking-wider block">
                             Tutor Explanation:
                           </span>
@@ -355,7 +355,7 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
                 <button
                   onClick={onRestart}
                   id="final-restart-btn"
-                  className="py-3 px-8 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white rounded-xl font-bold text-sm shadow-xs hover:shadow-md transition-all cursor-pointer flex items-center gap-2"
+                  className="py-3 px-8 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-xl font-bold text-sm shadow-md transition-all cursor-pointer flex items-center gap-2"
                 >
                   <RefreshCw className="w-4 h-4 cursor-pointer" />
                   Load New Text or Restart Setup
@@ -364,10 +364,10 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
             </div>
           ) : (
             /* ACTIVE EXAM RUNNING VIEW */
-            <div className="bg-white border border-slate-100 rounded-2xl shadow-xs select-none p-6 md:p-8 space-y-6">
+            <div className="bg-[#16181d] border border-[#232731] rounded-2xl shadow-xs select-none p-6 md:p-8 space-y-6">
               
               {/* Question pagination timeline indicator */}
-              <div className="flex gap-1.5 items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex gap-1.5 items-center justify-between border-b border-[#232731] pb-4">
                 <div className="flex gap-1.5 items-center">
                   {quizState.questions.map((_, i) => {
                     const isPassed = i < activeQuestionIdx;
@@ -379,12 +379,12 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
                         key={i}
                         onClick={() => setActiveQuestionIdx(i)}
                         id={`btn-page-${i}`}
-                        className={`w-7 h-7 rounded-lg text-xs font-mono font-bold flex items-center justify-center transition-all ${
+                        className={`w-7 h-7 rounded-lg text-xs font-mono font-bold flex items-center justify-center transition-all cursor-pointer ${
                           isCurrent
                             ? "bg-indigo-600 text-white"
                             : hasAnswer
-                            ? "bg-indigo-50 text-indigo-600 border border-indigo-200"
-                            : "bg-slate-50 hover:bg-slate-100 text-slate-400 border border-slate-100"
+                            ? "bg-indigo-950/70 text-indigo-300 border border-indigo-700/50"
+                            : "bg-[#111317] hover:bg-[#1a1d26] text-slate-400 border border-[#242935]"
                         }`}
                       >
                         {i + 1}
@@ -392,7 +392,7 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
                     );
                   })}
                 </div>
-                <span className="text-xs font-mono font-bold bg-slate-50 text-slate-400 px-2 py-0.5 rounded-sm">
+                <span className="text-xs font-mono font-bold bg-[#111317] text-slate-400 px-2.5 py-1 rounded-md border border-[#242935]">
                   Question {activeQuestionIdx + 1} of {totalQuestions}
                 </span>
               </div>
@@ -400,7 +400,7 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
               {/* Current Question Block */}
               {activeQuestion && (
                 <div className="space-y-6 animate-fadeIn">
-                  <h3 className="font-extrabold text-slate-800 text-base md:text-lg leading-relaxed">
+                  <h3 className="font-extrabold text-white text-base md:text-lg leading-relaxed">
                     {activeQuestion.question}
                   </h3>
 
@@ -417,15 +417,15 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
                           id={`option-selector-${activeQuestionIdx}-${oIdx}`}
                           className={`p-4 rounded-xl text-left text-xs transition-all border flex items-center gap-3 cursor-pointer ${
                             selected
-                              ? "bg-indigo-50/70 border-indigo-500 text-indigo-900 font-semibold"
-                              : "bg-white hover:bg-slate-50 text-slate-600 border-slate-200"
+                              ? "bg-indigo-950/80 border-indigo-500 text-indigo-200 font-semibold ring-1 ring-indigo-400/50"
+                              : "bg-[#111317] hover:bg-[#1b1e28] text-slate-300 border-[#242935]"
                           }`}
                         >
                           <span
                             className={`w-6 h-6 rounded-full font-mono font-bold text-[11px] flex items-center justify-center ${
                               selected
                                 ? "bg-indigo-600 text-white"
-                                : "bg-slate-100 text-slate-500"
+                                : "bg-[#1f232d] text-slate-400 border border-[#2c3242]"
                             }`}
                           >
                             {letter}
@@ -439,15 +439,15 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
               )}
 
               {/* Navigating and Submitting */}
-              <div className="flex items-center justify-between border-t border-slate-100 pt-6">
+              <div className="flex items-center justify-between border-t border-[#232731] pt-6">
                 <button
                   disabled={activeQuestionIdx === 0}
                   onClick={() => setActiveQuestionIdx((prev) => prev - 1)}
                   id="quiz-btn-prev"
                   className={`text-xs font-semibold px-4 py-2 border rounded-xl transition-colors cursor-pointer ${
                     activeQuestionIdx === 0
-                      ? "text-slate-300 border-slate-100 cursor-not-allowed"
-                      : "text-slate-600 border-slate-200 hover:bg-slate-50"
+                      ? "text-slate-600 border-[#232731] cursor-not-allowed"
+                      : "text-slate-300 border-[#2b3140] hover:bg-[#1f232d]"
                   }`}
                 >
                   &larr; Previous Category
@@ -457,7 +457,7 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
                   <button
                     onClick={() => setActiveQuestionIdx((prev) => prev + 1)}
                     id="quiz-btn-next"
-                    className="text-xs font-semibold px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl transition-colors cursor-pointer"
+                    className="text-xs font-semibold px-4 py-2 bg-[#252a36] hover:bg-[#303746] text-white rounded-xl transition-colors cursor-pointer border border-[#373e4f]"
                   >
                     Next Category &rarr;
                   </button>
@@ -469,7 +469,7 @@ export default function QuizView({ text, stats, onRestart, onQuizSubmit }: QuizV
                     className={`text-xs font-bold px-6 py-2 rounded-xl flex items-center gap-1.5 shadow-xs transition-all ${
                       Object.keys(quizState.userAnswers).length === totalQuestions
                         ? "bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white cursor-pointer hover:scale-[1.02]"
-                        : "bg-slate-100 text-slate-300 cursor-not-allowed"
+                        : "bg-[#1f232d] text-slate-500 border border-[#292f3d] cursor-not-allowed"
                     }`}
                   >
                     <Sparkles className="w-3.5 h-3.5 fill-current" />

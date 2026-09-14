@@ -157,9 +157,9 @@ export default function ReadingView({
   };
 
   const familyClasses = {
-    [FontFamily.SANS]: "font-sans font-medium tracking-tight",
-    [FontFamily.SERIF]: "font-serif tracking-normal leading-relaxed",
-    [FontFamily.MONO]: "font-mono tracking-normal text-slate-800",
+    [FontFamily.SANS]: "font-sans font-medium tracking-tight text-slate-200",
+    [FontFamily.SERIF]: "font-serif tracking-normal leading-relaxed text-slate-200",
+    [FontFamily.MONO]: "font-mono tracking-normal text-slate-200",
   };
 
   const elapsedSecondsCount = Math.floor(elapsedMs / 1000);
@@ -177,26 +177,26 @@ export default function ReadingView({
   if (isPlaying) {
     return (
       <div 
-        className="fixed inset-0 bg-slate-50 z-50 flex flex-col h-screen w-screen animate-fadeIn select-none" 
+        className="fixed inset-0 bg-[#111317] z-50 flex flex-col h-screen w-screen animate-fadeIn select-none text-slate-200" 
         id="fullscreen-training-pane"
       >
         {/* Main Column Training Stage Pane (Scroll Area) */}
-        <div className="relative flex-1 bg-slate-50 overflow-hidden">
+        <div className="relative flex-1 bg-[#111317] overflow-hidden">
           {/* Outer scrolling container centering the narrow column strictly */}
           <div
             ref={containerRef}
             className="h-full overflow-y-auto px-6 py-48 select-none"
             id="narrow-column-scroll-viewport-fullscreen"
           >
-            <div className={`max-w-md mx-auto relative ${config.satActMode ? "pl-16 pr-4 border-l border-slate-200" : ""}`}>
+            <div className={`max-w-md mx-auto relative ${config.satActMode ? "pl-16 pr-4 border-l border-[#242935]" : ""}`}>
               
               {/* SAT & ACT line numbering instruction / test header if in SAT ACT mode */}
               {config.satActMode && (
-                <div className="absolute -top-16 left-0 right-0 border-b border-rose-100 pb-2 mb-6 pointer-events-none select-none">
-                  <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest block font-sans">
+                <div className="absolute -top-16 left-0 right-0 border-b border-[#381a23] pb-2 mb-6 pointer-events-none select-none">
+                  <span className="text-[10px] font-bold text-rose-400 uppercase tracking-widest block font-sans">
                     ACT/SAT Diagnostic Passage
                   </span>
-                  <p className="text-[9px] text-slate-400 font-sans">
+                  <p className="text-[9px] text-slate-500 font-sans">
                     Refer to line indicators in left margin for comprehension alignment.
                   </p>
                 </div>
@@ -204,7 +204,7 @@ export default function ReadingView({
 
               {/* Norman Lewis guide line down the center of the column */}
               {config.showCenterGuide && !config.satActMode && (
-                <div className="absolute top-0 bottom-0 left-1/2 w-[1px] bg-indigo-200/50 -translate-x-1/2 pointer-events-none z-0" />
+                <div className="absolute top-0 bottom-0 left-1/2 w-[1px] bg-indigo-500/30 -translate-x-1/2 pointer-events-none z-0" />
               )}
 
               {/* Structured words by paragraphs */}
@@ -225,11 +225,11 @@ export default function ReadingView({
                         } ${
                           config.visualPacerEnabled
                             ? isPacedActive
-                              ? "bg-indigo-100 font-bold text-indigo-900 border-indigo-500 ring-2 ring-indigo-400/50 rounded-md shadow-sm"
+                              ? "bg-indigo-950/80 font-bold text-indigo-200 border-indigo-400 ring-2 ring-indigo-500/50 rounded-md shadow-sm"
                               : isPassed
                               ? "opacity-30 blur-[0.2px]"
                               : "opacity-60"
-                            : "hover:bg-slate-200 rounded-md"
+                            : "hover:bg-[#1a1d26] rounded-md"
                         }`;
 
                         // For SAT/ACT mode, we render spans inline with horizontal padding.
@@ -264,7 +264,7 @@ export default function ReadingView({
                             onClick={() => handleLineClick(flatIdx)}
                             className={`py-1.5 px-3 rounded-lg block ${
                               config.alignment === "left" ? "pl-6" : ""
-                            } ${baseClasses} ${isPacedActive && !config.satActMode ? "scale-[1.03] border-l-4" : ""}`}
+                            } ${baseClasses} ${isPacedActive && !config.satActMode ? "scale-[1.03] border-l-4 border-indigo-500" : ""}`}
                           >
                             <span
                               className={`${sizeClasses[config.fontSize]} ${
@@ -275,7 +275,7 @@ export default function ReadingView({
                             </span>
                             {/* Soft visual indicator bullet on the left for vertical posture gaze tracking */}
                             {isPacedActive && config.alignment === "left" && (
-                              <span className="absolute left-1.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
+                              <span className="absolute left-1.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-indigo-400 animate-ping" />
                             )}
                           </div>
                         );
@@ -288,14 +288,14 @@ export default function ReadingView({
           </div>
 
           {/* Minimal visual progress indicators on top edge in fullscreen */}
-          <div className="absolute top-4 left-6 right-6 flex items-center justify-between text-xs pointer-events-none opacity-50 font-mono select-none">
+          <div className="absolute top-4 left-6 right-6 flex items-center justify-between text-xs pointer-events-none opacity-50 font-mono select-none text-slate-400">
             <span>Volume: {totalWordsCount} words</span>
             {config.visualPacerEnabled && <span>Pacer active ({config.pacerWpm} WPM)</span>}
           </div>
         </div>
 
         {/* Floating Minimal HUD footer housing ONLY Pause and Done buttons */}
-        <div className="bg-slate-900 text-white py-4 px-6 flex items-center justify-between shadow-2xl z-50 select-none">
+        <div className="bg-[#16181d] border-t border-[#232731] text-white py-4 px-6 flex items-center justify-between shadow-2xl z-50 select-none">
           {/* Pause Button */}
           <button
             onClick={handleTogglePlay}
@@ -328,11 +328,11 @@ export default function ReadingView({
   return (
     <div className="max-w-4xl mx-auto flex flex-col h-[calc(100vh-140px)] min-h-[450px]" id="reading-trainer-stage">
       {/* Dynamic Header Controls Bar */}
-      <div className="bg-slate-900 text-white rounded-t-2xl px-6 py-4 flex flex-wrap items-center justify-between gap-4 shadow-sm z-10 select-none">
+      <div className="bg-[#16181d] border border-[#232731] text-white rounded-t-2xl px-6 py-4 flex flex-wrap items-center justify-between gap-4 shadow-sm z-10 select-none">
         <button
           onClick={onBack}
           id="btn-back-setup"
-          className="text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-lg hover:bg-slate-800 transition-colors"
+          className="text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-lg hover:bg-[#252a36] transition-colors border border-transparent hover:border-[#373e4f]"
         >
           &larr; Exit Trainer
         </button>
@@ -382,26 +382,26 @@ export default function ReadingView({
       </div>
 
       {/* Main Column Training Stage Pane (Scroll Area) */}
-      <div className="relative flex-1 bg-slate-50 border-x border-slate-200 overflow-hidden">
+      <div className="relative flex-1 bg-[#111317] border-x border-[#232731] overflow-hidden">
         {/* Hotkey Info Overlay / Pause overlay */}
         {!isPlaying && (
-          <div className="absolute inset-0 bg-slate-50/90 flex flex-col items-center justify-center text-center p-6 z-20 select-none animate-fadeIn">
+          <div className="absolute inset-0 bg-[#111317]/95 flex flex-col items-center justify-center text-center p-6 z-20 select-none animate-fadeIn">
             <div className="max-w-md space-y-4">
-              <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center mx-auto text-indigo-600 animate-pulse">
+              <div className="w-16 h-16 rounded-full bg-[#1b1e28] border border-[#2c3242] flex items-center justify-center mx-auto text-indigo-400 animate-pulse">
                 <Play className="w-8 h-8 fill-current ml-1" />
               </div>
-              <h2 className="text-xl font-bold text-slate-800">
+              <h2 className="text-xl font-bold text-white">
                 {elapsedMs > 0 ? "Training Paused" : "Ready to Train?"}
               </h2>
-              <p className="text-xs text-slate-500 leading-relaxed font-sans">
+              <p className="text-xs text-slate-400 leading-relaxed font-sans">
                 Position your gaze squarely on the first line. Click{" "}
-                <strong className="text-slate-700 font-semibold">Start Stopwatch</strong> (or press
-                the <kbd className="px-1.5 py-0.5 bg-slate-100 border rounded-xs font-mono text-[10px] text-slate-700 font-bold">Space</kbd> key) to active the text, begin stopwatch, or engage your visual target pacer.
+                <strong className="text-slate-200 font-semibold">Start Stopwatch</strong> (or press
+                the <kbd className="px-1.5 py-0.5 bg-[#1f232c] border border-[#2e3442] rounded-xs font-mono text-[10px] text-slate-300 font-bold">Space</kbd> key) to active the text, begin stopwatch, or engage your visual target pacer.
               </p>
               <button
                 onClick={handleTogglePlay}
                 id="btn-overlay-start"
-                className="inline-flex py-2 px-5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-lg font-bold text-sm cursor-pointer hover:shadow-xs transition-colors"
+                className="inline-flex py-2.5 px-6 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-xl font-bold text-sm cursor-pointer hover:shadow-lg hover:shadow-indigo-600/20 transition-all"
               >
                 {elapsedMs > 0 ? "Resume Training" : "Start Stopwatch"}
               </button>
@@ -415,15 +415,15 @@ export default function ReadingView({
           className="h-full overflow-y-auto px-4 py-36 select-none"
           id="narrow-column-scroll-viewport"
         >
-          <div className={`max-w-md mx-auto relative ${config.satActMode ? "pl-16 pr-4 border-l border-slate-200" : ""}`}>
+          <div className={`max-w-md mx-auto relative ${config.satActMode ? "pl-16 pr-4 border-l border-[#242935]" : ""}`}>
             
             {/* SAT & ACT line numbering instruction if in SAT ACT mode */}
             {config.satActMode && (
-              <div className="absolute -top-16 left-0 right-0 border-b border-rose-100 pb-2 mb-6 pointer-events-none select-none">
-                <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest block font-sans">
+              <div className="absolute -top-16 left-0 right-0 border-b border-[#381a23] pb-2 mb-6 pointer-events-none select-none">
+                <span className="text-[10px] font-bold text-rose-400 uppercase tracking-widest block font-sans">
                   ACT/SAT Diagnostic Passage Layout
                 </span>
-                <p className="text-[9px] text-slate-400 font-sans">
+                <p className="text-[9px] text-slate-500 font-sans">
                   Refer to line indicators in left margin for comprehension alignment.
                 </p>
               </div>
@@ -431,7 +431,7 @@ export default function ReadingView({
 
             {/* Norman Lewis guide line down the center of the column */}
             {config.showCenterGuide && !config.satActMode && (
-              <div className="absolute top-0 bottom-0 left-1/2 w-[1px] bg-indigo-200/50 -translate-x-1/2 pointer-events-none z-0" />
+              <div className="absolute top-0 bottom-0 left-1/2 w-[1px] bg-indigo-500/30 -translate-x-1/2 pointer-events-none z-0" />
             )}
 
             {/* Structured words by paragraphs */}
@@ -452,11 +452,11 @@ export default function ReadingView({
                       } ${
                         config.visualPacerEnabled
                           ? isPacedActive
-                            ? "bg-indigo-100 font-bold text-indigo-900 border-indigo-500 ring-2 ring-indigo-400/50 rounded-md shadow-sm"
+                            ? "bg-indigo-950/80 font-bold text-indigo-200 border-indigo-400 ring-2 ring-indigo-500/50 rounded-md shadow-sm"
                             : isPassed
                             ? "opacity-30 blur-[0.2px]"
                             : "opacity-60"
-                          : "hover:bg-slate-200 rounded-md"
+                          : "hover:bg-[#1a1d26] rounded-md"
                       }`;
 
                       // For SAT/ACT mode, we render spans inline with horizontal padding.
@@ -470,7 +470,7 @@ export default function ReadingView({
                           >
                             {/* Show line numbers every 10 word groups, floating in left margin conceptually */}
                             {(lineNo % 10 === 0 || lineNo === 1) && (
-                              <span className="absolute -left-16 text-[9px] font-mono font-bold text-slate-400 select-none hidden md:inline-block">
+                              <span className="absolute -left-16 text-[9px] font-mono font-bold text-slate-500 select-none hidden md:inline-block">
                                 L-{lineNo}
                               </span>
                             )}
@@ -491,7 +491,7 @@ export default function ReadingView({
                           onClick={() => handleLineClick(flatIdx)}
                           className={`py-1.5 px-3 rounded-lg block ${
                             config.alignment === "left" ? "pl-6" : ""
-                          } ${baseClasses} ${isPacedActive && !config.satActMode ? "scale-[1.03] border-l-4" : ""}`}
+                          } ${baseClasses} ${isPacedActive && !config.satActMode ? "scale-[1.03] border-l-4 border-indigo-500" : ""}`}
                         >
                           <span
                             className={`${sizeClasses[config.fontSize]} ${
@@ -502,7 +502,7 @@ export default function ReadingView({
                           </span>
                           {/* Soft visual indicator bullet on the left for vertical posture gaze tracking */}
                           {isPacedActive && config.alignment === "left" && (
-                            <span className="absolute left-1.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
+                            <span className="absolute left-1.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-indigo-400 animate-ping" />
                           )}
                         </div>
                       );
@@ -516,7 +516,7 @@ export default function ReadingView({
       </div>
 
       {/* Floating Bottom Dashboard Controls Bar */}
-      <div className="bg-white border-t border-slate-200 rounded-b-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm select-none">
+      <div className="bg-[#16181d] border-t border-[#232731] rounded-b-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm select-none">
         
         {/* Play/Pause/Rewind Buttons */}
         <div className="flex items-center gap-2">
@@ -525,7 +525,7 @@ export default function ReadingView({
             id="bar-play-pause-toggle"
             className={`w-11 h-11 rounded-full flex items-center justify-center shadow-xs transition-all cursor-pointer ${
               isPlaying
-                ? "bg-amber-500 hover:bg-amber-600 text-white"
+                ? "bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold"
                 : "bg-indigo-600 hover:bg-indigo-500 text-white"
             }`}
             title="Press Spacebar to Play or Pause"
@@ -540,7 +540,7 @@ export default function ReadingView({
           <button
             onClick={handleReset}
             id="bar-reset-timer"
-            className="w-9 h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
+            className="w-9 h-9 rounded-xl border border-[#2b3140] bg-[#101216] hover:bg-[#1f232d] text-slate-300 flex items-center justify-center transition-colors cursor-pointer"
             title="Rewind to First Line"
           >
             <RotateCcw className="w-4 h-4 cursor-pointer" />
@@ -553,15 +553,15 @@ export default function ReadingView({
           <button
             onClick={() => onChangeConfig({ ...config, showCenterGuide: !config.showCenterGuide })}
             id="bar-toggle-guide"
-            className={`px-3 py-1.5 rounded-lg border text-xs font-bold font-sans flex items-center gap-1 transition-all ${
+            className={`px-3 py-1.5 rounded-lg border text-xs font-bold font-sans flex items-center gap-1 transition-all cursor-pointer ${
               config.showCenterGuide
-                ? "bg-slate-100 text-slate-800 border-slate-300 shadow-2xs"
-                : "bg-white text-slate-400 hover:bg-slate-50 border-slate-200"
+                ? "bg-[#252a36] text-white border-[#373e4f] shadow-2xs"
+                : "bg-[#101216] text-slate-400 hover:bg-[#181b22] border-[#242935]"
             }`}
           >
             {config.showCenterGuide ? (
               <>
-                <Eye className="w-3.5 h-3.5 text-indigo-500" />
+                <Eye className="w-3.5 h-3.5 text-indigo-400" />
                 Guide Line On
               </>
             ) : (
@@ -576,15 +576,15 @@ export default function ReadingView({
           <button
             onClick={() => onChangeConfig({ ...config, visualPacerEnabled: !config.visualPacerEnabled })}
             id="bar-toggle-pacer"
-            className={`px-3 py-1.5 rounded-lg border text-xs font-bold font-sans flex items-center gap-1 transition-all ${
+            className={`px-3 py-1.5 rounded-lg border text-xs font-bold font-sans flex items-center gap-1 transition-all cursor-pointer ${
               config.visualPacerEnabled
-                ? "bg-pink-50 text-pink-700 border-pink-200 shadow-2xs"
-                : "bg-white text-slate-400 hover:bg-slate-50 border-slate-200"
+                ? "bg-pink-950/60 text-pink-300 border-pink-700/50 shadow-2xs"
+                : "bg-[#101216] text-slate-400 hover:bg-[#181b22] border-[#242935]"
             }`}
           >
             {config.visualPacerEnabled ? (
               <>
-                <Settings2 className="w-3.5 h-3.5 text-pink-500" />
+                <Settings2 className="w-3.5 h-3.5 text-pink-400" />
                 Pacer Highlight On
               </>
             ) : (
@@ -598,13 +598,13 @@ export default function ReadingView({
 
         {/* Live Adjustments Slider (only if pacer active) */}
         {config.visualPacerEnabled ? (
-          <div className="flex items-center gap-4 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+          <div className="flex items-center gap-4 bg-[#101216] px-3 py-1.5 rounded-xl border border-[#242935]">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
               Live Target WPM:
             </span>
             <input
               type="range"
-              className="w-32 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+              className="w-32 h-1 bg-[#252a36] rounded-lg appearance-none cursor-pointer accent-indigo-500"
               min={100}
               max={800}
               step={25}
@@ -612,13 +612,13 @@ export default function ReadingView({
               onChange={(e) => onChangeConfig({ ...config, pacerWpm: parseInt(e.target.value) })}
               id="bar-slider-pacer"
             />
-            <span className="text-xs font-mono font-bold text-indigo-600 min-w-[54px] text-right">
+            <span className="text-xs font-mono font-bold text-indigo-400 min-w-[54px] text-right">
               {config.pacerWpm} WPM
             </span>
           </div>
         ) : (
           <div className="text-xs text-slate-400 flex items-center gap-1.5 mr-2">
-            <HelpCircle className="w-4 h-4 text-slate-300" />
+            <HelpCircle className="w-4 h-4 text-slate-500" />
             <span>Click any word group line to move timing focus.</span>
           </div>
         )}
